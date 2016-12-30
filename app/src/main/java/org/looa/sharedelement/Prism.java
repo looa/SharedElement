@@ -5,12 +5,13 @@ import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.BounceInterpolator;
+import android.view.animation.Interpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 
 import java.io.Serializable;
@@ -22,6 +23,7 @@ import java.io.Serializable;
 public class Prism {
 
     private final static String SHARED_ELEMENT_DATA = "sharedElementData";
+    private final static int ANIM_DURATION = 250;
 
     private static class Holder {
         static Prism INSTANT = new Prism();
@@ -47,12 +49,13 @@ public class Prism {
     public void startActivity(View view, Intent intent, boolean justSharedImageView, int sharedElementPosition) {
         int viewWidth = 0;
         int viewHeight = 0;
-        int[] coordinate = new int[2];
+        float[] coordinate = new float[2];
 
         if (!justSharedImageView || !(view instanceof ViewGroup)) {
             viewWidth = view.getWidth();
             viewHeight = view.getHeight();
-            view.getLocationInWindow(coordinate);
+            coordinate[0] = view.getX();
+            coordinate[1] = view.getY();
         } else {
             int count = 0;
             for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
@@ -61,7 +64,8 @@ public class Prism {
                     if (count == sharedElementPosition) {
                         viewWidth = targetView.getWidth();
                         viewHeight = targetView.getHeight();
-                        targetView.getLocationInWindow(coordinate);
+                        coordinate[0] = targetView.getX();
+                        coordinate[1] = targetView.getY();
                         break;
                     }
                     count++;
@@ -70,12 +74,13 @@ public class Prism {
             if (sharedElementPosition < 0 || sharedElementPosition >= ((ViewGroup) view).getChildCount()) {
                 viewWidth = view.getWidth();
                 viewHeight = view.getHeight();
-                view.getLocationInWindow(coordinate);
+                coordinate[0] = view.getX();
+                coordinate[1] = view.getY();
             }
         }
 
-        int coordinateX = coordinate[0];
-        int coordinateY = coordinate[1];
+        float coordinateX = coordinate[0];
+        float coordinateY = coordinate[1];
 
         SharedElementData sourceData = new SharedElementData();
         sourceData.setWidth(viewWidth);
@@ -106,22 +111,53 @@ public class Prism {
 
     private void startViewAnim(View view) {
         SharedElementData data = (SharedElementData) ((Activity) view.getContext()).getIntent().getSerializableExtra(SHARED_ELEMENT_DATA);
-        ObjectAnimator animator = ObjectAnimator.ofFloat(view, "scaleX", 1f * data.getWidth() / view.getWidth(), 1);
+        if (data == null) return;
+        int width = view.getWidth();
+        int height = view.getHeight();
+        ViewGroup parent = (ViewGroup) view.getParent();
+        if (parent != null) {
+            parent.setClipChildren(false);
+            parent.setClipToPadding(false);
+        }
+        float sourceX = data.getCoordinateX() + (data.getWidth() - width) / 2f - view.getX();
+        float sourceY = data.getCoordinateY() + (data.getHeight() - height) / 2f - view.getY();
+        ObjectAnimator animator1 = ObjectAnimator.ofFloat(view, "scaleX", 1f * data.getWidth() / view.getWidth(), 1);
         ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "scaleY", 1f * data.getHeight() / view.getHeight(), 1);
+        ObjectAnimator animator3 = ObjectAnimator.ofFloat(view, "translationX", sourceX, 0);
+        ObjectAnimator animator4 = ObjectAnimator.ofFloat(view, "translationY", sourceY, 0);
+        Interpolator interpolator = new OvershootInterpolator(1.1f);
         AnimatorSet set = new AnimatorSet();
-        set.play(animator).with(animator2);
-        set.setDuration(300);
-        set.setInterpolator(new BounceInterpolator());
+        set.setInterpolator(interpolator);
+        set.play(animator3).with(animator4).with(animator1).with(animator2);
+        set.setDuration(ANIM_DURATION);
         set.start();
     }
 
+    /**
+     * TODO 所有的非目标view渐变出现，从rootView遍历
+     *
+     * @param view targetView
+     */
     private void startWindowAnim(final View view) {
-        view.getContext().setTheme(android.R.style.Theme_Translucent_NoTitleBar);
         Window window = ((Activity) view.getContext()).getWindow();
         View parent = window.getDecorView().findViewById(android.R.id.content);
-        AlphaAnimation animation = new AlphaAnimation(0, 1);
-        animation.setDuration(300);
-        parent.setAnimation(animation);
+        if (parent instanceof ViewGroup) {
+            if (((ViewGroup) parent).getChildCount() > 0) {
+                View realParent = ((ViewGroup) parent).getChildAt(0);
+                for (int i = 0; i < ((ViewGroup) realParent).getChildCount(); i++) {
+                    View child = ((ViewGroup) realParent).getChildAt(i);
+                    if (child != view) {
+                        child.setAlpha(0);
+                        ObjectAnimator animatorChild = ObjectAnimator.ofFloat(child, "alpha", 0, 1);
+                        animatorChild.setDuration(ANIM_DURATION);
+                        animatorChild.setStartDelay(ANIM_DURATION);
+                        animatorChild.start();
+                    }
+                }
+            }
+        } else {
+            Log.e(getClass().getName(), "" + parent.getClass().getName());
+        }
     }
 
     @TargetApi(16)
@@ -132,8 +168,8 @@ public class Prism {
     private static class SharedElementData implements Serializable {
         int width;
         int height;
-        int coordinateX;
-        int coordinateY;
+        float coordinateX;
+        float coordinateY;
 
         public int getWidth() {
             return width;
@@ -151,19 +187,19 @@ public class Prism {
             this.height = height;
         }
 
-        public int getCoordinateX() {
+        public float getCoordinateX() {
             return coordinateX;
         }
 
-        public void setCoordinateX(int coordinateX) {
+        public void setCoordinateX(float coordinateX) {
             this.coordinateX = coordinateX;
         }
 
-        public int getCoordinateY() {
+        public float getCoordinateY() {
             return coordinateY;
         }
 
-        public void setCoordinateY(int coordinateY) {
+        public void setCoordinateY(float coordinateY) {
             this.coordinateY = coordinateY;
         }
     }
