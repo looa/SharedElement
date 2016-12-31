@@ -1,15 +1,18 @@
 package org.looa.sharedelement;
 
+import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
@@ -49,13 +52,12 @@ public class Prism {
     public void startActivity(View view, Intent intent, boolean justSharedImageView, int sharedElementPosition) {
         int viewWidth = 0;
         int viewHeight = 0;
-        float[] coordinate = new float[2];
+        int[] coordinate = new int[2];
 
         if (!justSharedImageView || !(view instanceof ViewGroup)) {
             viewWidth = view.getWidth();
             viewHeight = view.getHeight();
-            coordinate[0] = view.getX();
-            coordinate[1] = view.getY();
+            view.getLocationInWindow(coordinate);
         } else {
             int count = 0;
             for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
@@ -64,8 +66,7 @@ public class Prism {
                     if (count == sharedElementPosition) {
                         viewWidth = targetView.getWidth();
                         viewHeight = targetView.getHeight();
-                        coordinate[0] = targetView.getX();
-                        coordinate[1] = targetView.getY();
+                        targetView.getLocationInWindow(coordinate);
                         break;
                     }
                     count++;
@@ -74,8 +75,7 @@ public class Prism {
             if (sharedElementPosition < 0 || sharedElementPosition >= ((ViewGroup) view).getChildCount()) {
                 viewWidth = view.getWidth();
                 viewHeight = view.getHeight();
-                coordinate[0] = view.getX();
-                coordinate[1] = view.getY();
+                view.getLocationInWindow(coordinate);
             }
         }
 
@@ -114,13 +114,10 @@ public class Prism {
         if (data == null) return;
         int width = view.getWidth();
         int height = view.getHeight();
-        ViewGroup parent = (ViewGroup) view.getParent();
-        if (parent != null) {
-            parent.setClipChildren(false);
-            parent.setClipToPadding(false);
-        }
-        float sourceX = data.getCoordinateX() + (data.getWidth() - width) / 2f - view.getX();
-        float sourceY = data.getCoordinateY() + (data.getHeight() - height) / 2f - view.getY();
+        int[] viewCoordinate = new int[2];
+        view.getLocationInWindow(viewCoordinate);
+        float sourceX = data.getCoordinateX() + (data.getWidth() - width) / 2f - viewCoordinate[0];
+        float sourceY = data.getCoordinateY() + (data.getHeight() - height) / 2f - viewCoordinate[1];
         ObjectAnimator animator1 = ObjectAnimator.ofFloat(view, "scaleX", 1f * data.getWidth() / view.getWidth(), 1);
         ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "scaleY", 1f * data.getHeight() / view.getHeight(), 1);
         ObjectAnimator animator3 = ObjectAnimator.ofFloat(view, "translationX", sourceX, 0);
@@ -133,30 +130,37 @@ public class Prism {
         set.start();
     }
 
+    private boolean isClipChild = false;
+
     /**
-     * TODO 所有的非目标view渐变出现，从rootView遍历
      *
      * @param view targetView
      */
     private void startWindowAnim(final View view) {
         Window window = ((Activity) view.getContext()).getWindow();
-        View parent = window.getDecorView().findViewById(android.R.id.content);
+        final View parent = window.getDecorView().findViewById(android.R.id.content);
         if (parent instanceof ViewGroup) {
             if (((ViewGroup) parent).getChildCount() > 0) {
                 View realParent = ((ViewGroup) parent).getChildAt(0);
-                for (int i = 0; i < ((ViewGroup) realParent).getChildCount(); i++) {
-                    View child = ((ViewGroup) realParent).getChildAt(i);
-                    if (child != view) {
-                        child.setAlpha(0);
-                        ObjectAnimator animatorChild = ObjectAnimator.ofFloat(child, "alpha", 0, 1);
-                        animatorChild.setDuration(ANIM_DURATION);
-                        animatorChild.setStartDelay(ANIM_DURATION);
-                        animatorChild.start();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                    isClipChild = ((ViewGroup) realParent).getClipChildren();
+                }
+                ((ViewGroup) realParent).setClipChildren(false);
+                View temp = view;
+                while (temp.getParent() != null && temp.getParent() instanceof ViewGroup && temp.getParent() != parent) {
+                    for (int i = 0; i < ((ViewGroup) temp.getParent()).getChildCount(); i++) {
+                        View child = ((ViewGroup) temp.getParent()).getChildAt(i);
+                        if (child != temp) {
+                            child.setAlpha(0);
+                            ObjectAnimator animatorChild = ObjectAnimator.ofFloat(child, "alpha", 0, 1);
+                            animatorChild.setDuration(ANIM_DURATION);
+                            animatorChild.setStartDelay(ANIM_DURATION);
+                            animatorChild.start();
+                        }
                     }
+                    temp = (ViewGroup) temp.getParent();
                 }
             }
-        } else {
-            Log.e(getClass().getName(), "" + parent.getClass().getName());
         }
     }
 
