@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -138,7 +137,7 @@ public class Prism implements Animator.AnimatorListener {
                 public void run() {
                     try {
                         ((Activity) view.getContext()).finish();
-                        ((Activity) view.getContext()).overridePendingTransition(0, 0);
+                        ((Activity) view.getContext()).overridePendingTransition(0, android.R.anim.fade_out);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -196,7 +195,6 @@ public class Prism implements Animator.AnimatorListener {
                             child.setAlpha(enter ? 0 : 1);
                             ObjectAnimator animatorChild = ObjectAnimator.ofFloat(child, "alpha", enter ? 0 : 1, enter ? 1 : 0);
                             animatorChild.setDuration(ANIM_DURATION);
-                            animatorChild.setStartDelay(enter ? ANIM_DURATION : 0);
                             animatorChild.start();
                             if (!isFinishAnim) animatorChild.addListener(this);
                         }

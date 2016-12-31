@@ -16,21 +16,25 @@
 
     <TextView
         android:id="@+id/tv_title"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/iv_sub"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
+        android:background="@android:color/white"
+        android:paddingLeft="32dp"
+        android:paddingTop="16dp"
         android:text="The Main Title"
         android:textColor="#333333"
         android:textSize="24sp" />
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_below="@id/tv_title"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
+        android:background="@android:color/white"
+        android:paddingLeft="32dp"
+        android:paddingTop="16dp"
         android:text="Sub Title"
         android:textColor="#666"
         android:textSize="20sp" />
