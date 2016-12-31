@@ -2,27 +2,45 @@ package org.looa.sharedelement;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.ImageView;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.ArrayList;
+import java.util.List;
 
-    private ImageView imageView;
+public class MainActivity extends FragmentActivity {
+
+    private RecyclerView recycleView;
+    private LinearLayoutManager mLayoutManager;
+    private SimpleAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        imageView = (ImageView) findViewById(R.id.iv_main);
-        imageView.setOnClickListener(new View.OnClickListener() {
+        List<String> data = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            data.add((i + 1) + ". this is XiaoMei coser.");
+        }
+
+        mLayoutManager = new LinearLayoutManager(this);
+
+        adapter = new SimpleAdapter();
+        adapter.setData(data);
+        adapter.setOnItemClickListener(new SimpleAdapter.OnItemClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onItemClick(View view, int position) {
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, SubActivity.class);
-                Prism.getInstant().startActivity(v, intent);
+                Prism.getInstant().startActivity(view, intent, true);
             }
         });
+
+        recycleView = (RecyclerView) findViewById(R.id.rv_main);
+        recycleView.setLayoutManager(mLayoutManager);
+        recycleView.setAdapter(adapter);
     }
 }

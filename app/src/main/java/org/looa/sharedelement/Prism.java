@@ -28,6 +28,7 @@ public class Prism implements Animator.AnimatorListener {
     private final static int ANIM_DURATION = 250;
 
     private boolean isFinishAnim = false;
+    private boolean isHasBrother = false;
 
     @Override
     public void onAnimationStart(Animator animation) {
@@ -186,10 +187,12 @@ public class Prism implements Animator.AnimatorListener {
                 View realParent = ((ViewGroup) parent).getChildAt(0);
                 ((ViewGroup) realParent).setClipChildren(false);
                 View temp = view;
+                isHasBrother = false;
                 while (temp.getParent() != null && temp.getParent() instanceof ViewGroup && temp.getParent() != parent) {
                     for (int i = 0; i < ((ViewGroup) temp.getParent()).getChildCount(); i++) {
                         View child = ((ViewGroup) temp.getParent()).getChildAt(i);
                         if (child != temp) {
+                            isHasBrother = true;
                             child.setAlpha(enter ? 0 : 1);
                             ObjectAnimator animatorChild = ObjectAnimator.ofFloat(child, "alpha", enter ? 0 : 1, enter ? 1 : 0);
                             animatorChild.setDuration(ANIM_DURATION);
@@ -199,6 +202,14 @@ public class Prism implements Animator.AnimatorListener {
                         }
                     }
                     temp = (ViewGroup) temp.getParent();
+                }
+                if (!isHasBrother) {
+                    view.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            isFinishAnim = true;
+                        }
+                    }, ANIM_DURATION);
                 }
             }
         }

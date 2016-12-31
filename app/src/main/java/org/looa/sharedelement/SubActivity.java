@@ -1,10 +1,10 @@
 package org.looa.sharedelement;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.FragmentActivity;
 import android.widget.ImageView;
 
-public class SubActivity extends AppCompatActivity {
+public class SubActivity extends FragmentActivity {
 
     private ImageView imageView;
 
