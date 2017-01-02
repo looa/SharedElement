@@ -16,6 +16,8 @@ allprojects {
 }
 ````
 ## Sample
+![demo](./README/show.gif)
+
 Java
 ````groovy
 adapter.setOnItemClickListener(new SimpleAdapter.OnItemClickListener() {
@@ -37,7 +39,7 @@ protected void onCreate(Bundle savedInstanceState) {
     PrismSE.getInstant().initSharedElement(imageView);
 }
 ````
-````
+````groovy
 @Override
 public void onBackPressed() {
     PrismSE.getInstant().finish(imageView);
