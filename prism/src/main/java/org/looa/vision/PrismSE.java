@@ -1,4 +1,4 @@
-package org.looa.sharedelement;
+package org.looa.vision;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
@@ -18,16 +18,21 @@ import android.widget.ImageView;
 import java.io.Serializable;
 
 /**
+ * PrismSE - Prism SharedElement
+ * <p>
  * Created by ranxiangwei on 2016/12/30.
  */
 
-public class Prism implements Animator.AnimatorListener {
+public class PrismSE implements Animator.AnimatorListener {
 
     private final static String SHARED_ELEMENT_DATA = "sharedElementData";
     private final static int ANIM_DURATION = 250;
 
     private boolean isFinishAnim = false;
     private boolean isHasBrother = false;
+
+    private int enterAnim = 0;
+    private int exitAnim = -1;
 
     @Override
     public void onAnimationStart(Animator animation) {
@@ -48,10 +53,10 @@ public class Prism implements Animator.AnimatorListener {
     }
 
     private static class Holder {
-        static Prism INSTANT = new Prism();
+        static PrismSE INSTANT = new PrismSE();
     }
 
-    public static Prism getInstant() {
+    public static PrismSE getInstant() {
         return Holder.INSTANT;
     }
 
@@ -137,7 +142,7 @@ public class Prism implements Animator.AnimatorListener {
                 public void run() {
                     try {
                         ((Activity) view.getContext()).finish();
-                        ((Activity) view.getContext()).overridePendingTransition(0, android.R.anim.fade_out);
+                        ((Activity) view.getContext()).overridePendingTransition(enterAnim, exitAnim == -1 ? R.anim.fade_out_l : exitAnim);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -146,6 +151,11 @@ public class Prism implements Animator.AnimatorListener {
         } else {
             ((Activity) view.getContext()).finish();
         }
+    }
+
+    public void overridePendingTransition(int enterAnim, int exitAnim) {
+        this.exitAnim = exitAnim;
+        this.enterAnim = enterAnim;
     }
 
     private boolean startViewAnim(View view, boolean enter) {

@@ -7,6 +7,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
+import org.looa.vision.PrismSE;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class MainActivity extends FragmentActivity {
             public void onItemClick(View view, int position) {
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, SubActivity.class);
-                Prism.getInstant().startActivity(view, intent, true);
+                PrismSE.getInstant().startActivity(view, intent, true);
             }
         });
 

@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.widget.ImageView;
 
+import org.looa.vision.PrismSE;
+
 public class SubActivity extends FragmentActivity {
 
     private ImageView imageView;
@@ -13,11 +15,12 @@ public class SubActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub);
         imageView = (ImageView) findViewById(R.id.iv_sub);
-        Prism.getInstant().initSharedElement(imageView);
+        PrismSE.getInstant().initSharedElement(imageView);
     }
 
     @Override
     public void onBackPressed() {
-        Prism.getInstant().finish(imageView);
+        PrismSE.getInstant().finish(imageView);
+        PrismSE.getInstant().overridePendingTransition(0, android.R.anim.fade_out);
     }
 }
