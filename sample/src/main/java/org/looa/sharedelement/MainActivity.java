@@ -37,7 +37,9 @@ public class MainActivity extends FragmentActivity {
             public void onItemClick(View view, int position) {
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, SubActivity.class);
-                PrismSE.getInstant().startActivity(view, intent, true);
+                PrismSE.getInstant().initSharedElement(view, intent);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
             }
         });
 

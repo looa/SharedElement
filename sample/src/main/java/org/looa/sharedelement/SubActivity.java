@@ -15,12 +15,11 @@ public class SubActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub);
         imageView = (ImageView) findViewById(R.id.iv_sub);
-        PrismSE.getInstant().initSharedElement(imageView);
+        PrismSE.getInstant().matchSharedElement(imageView);
     }
 
     @Override
     public void onBackPressed() {
         PrismSE.getInstant().finish(imageView);
-        PrismSE.getInstant().overridePendingTransition(0, android.R.anim.fade_out);
     }
 }

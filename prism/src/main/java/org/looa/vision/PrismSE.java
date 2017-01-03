@@ -2,15 +2,17 @@ package org.looa.vision;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
-import android.view.animation.AnticipateInterpolator;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
@@ -32,7 +34,7 @@ public class PrismSE implements Animator.AnimatorListener {
     private boolean isHasBrother = false;
 
     private int enterAnim = 0;
-    private int exitAnim = -1;
+    private int exitAnim = 0;
 
     @Override
     public void onAnimationStart(Animator animation) {
@@ -61,31 +63,53 @@ public class PrismSE implements Animator.AnimatorListener {
     }
 
 
-    public void startActivity(View view, Intent intent) {
-        startActivity(view, intent, false, 0);
+    public void startActivity(View sharedElement, Intent intent) {
+        startActivity(sharedElement, intent, false, 0);
     }
 
-    public void startActivity(View view, Intent intent, boolean justSharedImageView) {
-        startActivity(view, intent, justSharedImageView, 0);
+    public void startActivity(View sharedElement, Intent intent, boolean justSharedImageView) {
+        startActivity(sharedElement, intent, justSharedImageView, 0);
     }
 
-    public void startActivity(View view, Intent intent, int sharedElementPosition) {
-        startActivity(view, intent, true, sharedElementPosition);
+    public void startActivity(View sharedElement, Intent intent, int sharedElementPosition) {
+        startActivity(sharedElement, intent, true, sharedElementPosition);
     }
 
-    public void startActivity(View view, Intent intent, boolean justSharedImageView, int sharedElementPosition) {
+    public void startActivity(View sharedElement, Intent intent, boolean justSharedImageView, int sharedElementPosition) {
+        initSharedElement(sharedElement, intent, justSharedImageView, sharedElementPosition);
+        sharedElement.getContext().startActivity(intent);
+        try {
+            ((Activity) sharedElement.getContext()).overridePendingTransition(0, 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void initSharedElement(View sharedElement, Intent intent) {
+        initSharedElement(sharedElement, intent, false, 0);
+    }
+
+    public void initSharedElement(View sharedElement, Intent intent, boolean justSharedImageView) {
+        initSharedElement(sharedElement, intent, justSharedImageView, 0);
+    }
+
+    public void initSharedElement(View sharedElement, Intent intent, int sharedElementPosition) {
+        initSharedElement(sharedElement, intent, true, sharedElementPosition);
+    }
+
+    public void initSharedElement(View sharedElement, Intent intent, boolean justSharedImageView, int sharedElementPosition) {
         int viewWidth = 0;
         int viewHeight = 0;
         int[] coordinate = new int[2];
 
-        if (!justSharedImageView || !(view instanceof ViewGroup)) {
-            viewWidth = view.getWidth();
-            viewHeight = view.getHeight();
-            view.getLocationInWindow(coordinate);
+        if (!justSharedImageView || !(sharedElement instanceof ViewGroup)) {
+            viewWidth = sharedElement.getWidth();
+            viewHeight = sharedElement.getHeight();
+            sharedElement.getLocationInWindow(coordinate);
         } else {
             int count = 0;
-            for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
-                View targetView = ((ViewGroup) view).getChildAt(i);
+            for (int i = 0; i < ((ViewGroup) sharedElement).getChildCount(); i++) {
+                View targetView = ((ViewGroup) sharedElement).getChildAt(i);
                 if (targetView instanceof ImageView) {
                     if (count == sharedElementPosition) {
                         viewWidth = targetView.getWidth();
@@ -96,10 +120,10 @@ public class PrismSE implements Animator.AnimatorListener {
                     count++;
                 }
             }
-            if (sharedElementPosition < 0 || sharedElementPosition >= ((ViewGroup) view).getChildCount()) {
-                viewWidth = view.getWidth();
-                viewHeight = view.getHeight();
-                view.getLocationInWindow(coordinate);
+            if (sharedElementPosition < 0 || sharedElementPosition >= ((ViewGroup) sharedElement).getChildCount()) {
+                viewWidth = sharedElement.getWidth();
+                viewHeight = sharedElement.getHeight();
+                sharedElement.getLocationInWindow(coordinate);
             }
         }
 
@@ -113,16 +137,14 @@ public class PrismSE implements Animator.AnimatorListener {
         sourceData.setCoordinateY(coordinateY);
 
         intent.putExtra(SHARED_ELEMENT_DATA, sourceData);
-
-        view.getContext().startActivity(intent);
-        try {
-            ((Activity) view.getContext()).overridePendingTransition(0, 0);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
-    public void initSharedElement(final View view) {
+    /**
+     * matching the shared element.
+     *
+     * @param view
+     */
+    public void matchSharedElement(final View view) {
         view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -142,7 +164,7 @@ public class PrismSE implements Animator.AnimatorListener {
                 public void run() {
                     try {
                         ((Activity) view.getContext()).finish();
-                        ((Activity) view.getContext()).overridePendingTransition(enterAnim, exitAnim == -1 ? R.anim.fade_out_l : exitAnim);
+                        ((Activity) view.getContext()).overridePendingTransition(enterAnim, exitAnim);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -176,12 +198,13 @@ public class PrismSE implements Animator.AnimatorListener {
         ObjectAnimator animator4 = ObjectAnimator.ofFloat(view, "translationY", enter ? sourceY : 0, enter ? 0 : sourceY);
         Interpolator interpolator;
         if (enter) interpolator = new OvershootInterpolator(1.1f);
-        else interpolator = new AnticipateInterpolator(1.1f);
+        else interpolator = new AccelerateDecelerateInterpolator();
         AnimatorSet set = new AnimatorSet();
         set.setInterpolator(interpolator);
         set.play(animator3).with(animator4).with(animator1).with(animator2);
         set.setDuration(ANIM_DURATION);
         set.start();
+        set.addListener(this);
         return true;
     }
 
@@ -195,6 +218,13 @@ public class PrismSE implements Animator.AnimatorListener {
             if (((ViewGroup) parent).getChildCount() > 0) {
                 View realParent = ((ViewGroup) parent).getChildAt(0);
                 ((ViewGroup) realParent).setClipChildren(false);
+                if (!enter) {
+                    ObjectAnimator animator = ObjectAnimator.ofInt(realParent, "backgroundColor", Color.parseColor("#ffffff"),
+                            Color.parseColor("#00a0a0a0"));
+                    animator.setDuration(ANIM_DURATION);
+                    animator.setEvaluator(new ArgbEvaluator());
+                    animator.start();
+                }
                 View temp = view;
                 isHasBrother = false;
                 while (temp.getParent() != null && temp.getParent() instanceof ViewGroup && temp.getParent() != parent) {
@@ -203,10 +233,9 @@ public class PrismSE implements Animator.AnimatorListener {
                         if (child != temp) {
                             isHasBrother = true;
                             child.setAlpha(enter ? 0 : 1);
-                            ObjectAnimator animatorChild = ObjectAnimator.ofFloat(child, "alpha", enter ? 0 : 1, enter ? 1 : 0);
+                            ObjectAnimator animatorChild = ObjectAnimator.ofFloat(child, "alpha", enter ? 0 : 1, enter ? 1 : 0, enter ? 1 : 0, enter ? 1 : 0);
                             animatorChild.setDuration(ANIM_DURATION);
                             animatorChild.start();
-                            if (!isFinishAnim) animatorChild.addListener(this);
                         }
                     }
                     temp = (ViewGroup) temp.getParent();
