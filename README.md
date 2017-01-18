@@ -36,7 +36,7 @@ adapter.setOnItemClickListener(new SimpleAdapter.OnItemClickListener() {
      public void onItemClick(View view, int position) {
           Intent intent = new Intent();
           intent.setClass(MainActivity.this, SubActivity.class);
-          PrismSE.getInstant().initSharedElement(view, intent);
+          PrismSE.getInstant().initSharedElement(view, intent, true);
           //you can use your method to start activity
           //maybe you have used url to open the next page.
           //instead of startActivity if you need.

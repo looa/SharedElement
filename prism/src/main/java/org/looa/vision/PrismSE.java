@@ -85,19 +85,31 @@ public class PrismSE implements Animator.AnimatorListener {
         }
     }
 
-    public void initSharedElement(View sharedElement, Intent intent) {
-        initSharedElement(sharedElement, intent, false, 0);
+    public SharedElementData initSharedElement(View sharedElement) {
+        return initSharedElement(sharedElement, null, false, 0);
     }
 
-    public void initSharedElement(View sharedElement, Intent intent, boolean justSharedImageView) {
-        initSharedElement(sharedElement, intent, justSharedImageView, 0);
+    public SharedElementData initSharedElement(View sharedElement, boolean justSharedImageView) {
+        return initSharedElement(sharedElement, null, true, 0);
     }
 
-    public void initSharedElement(View sharedElement, Intent intent, int sharedElementPosition) {
-        initSharedElement(sharedElement, intent, true, sharedElementPosition);
+    public SharedElementData initSharedElement(View sharedElement, int sharedElementPosition) {
+        return initSharedElement(sharedElement, null, false, sharedElementPosition);
     }
 
-    public void initSharedElement(View sharedElement, Intent intent, boolean justSharedImageView, int sharedElementPosition) {
+    public SharedElementData initSharedElement(View sharedElement, Intent intent) {
+        return initSharedElement(sharedElement, intent, false, 0);
+    }
+
+    public SharedElementData initSharedElement(View sharedElement, Intent intent, boolean justSharedImageView) {
+        return initSharedElement(sharedElement, intent, justSharedImageView, 0);
+    }
+
+    public SharedElementData initSharedElement(View sharedElement, Intent intent, int sharedElementPosition) {
+        return initSharedElement(sharedElement, intent, true, sharedElementPosition);
+    }
+
+    public SharedElementData initSharedElement(View sharedElement, Intent intent, boolean justSharedImageView, int sharedElementPosition) {
         int viewWidth = 0;
         int viewHeight = 0;
         int[] coordinate = new int[2];
@@ -136,7 +148,10 @@ public class PrismSE implements Animator.AnimatorListener {
         sourceData.setCoordinateX(coordinateX);
         sourceData.setCoordinateY(coordinateY);
 
-        intent.putExtra(SHARED_ELEMENT_DATA, sourceData);
+        if (intent != null)
+            intent.putExtra(SHARED_ELEMENT_DATA, sourceData);
+
+        return sourceData;
     }
 
     /**
@@ -257,7 +272,7 @@ public class PrismSE implements Animator.AnimatorListener {
         observer.removeOnGlobalLayoutListener(listener);
     }
 
-    private static class SharedElementData implements Serializable {
+    public static class SharedElementData implements Serializable {
         int width;
         int height;
         float coordinateX;
